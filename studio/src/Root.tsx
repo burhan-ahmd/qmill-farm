@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { Composition } from "remotion";
 import { BridgeShort, BRIDGE_FRAMES } from "./videos/bridge/Bridge";
 import { ColdframeSmokeTest, SMOKE_FRAMES } from "./videos/bridge/SmokeTest";
@@ -14,7 +14,7 @@ export const Root: React.FC = () => (
     <Composition id="BridgeShort" component={BridgeShort} durationInFrames={BRIDGE_FRAMES} fps={30} width={1080} height={1920} />
     {/* distributed-render smoke test: the story's first 450 frames plus the committed 15 s soundtrack */}
     <Composition id="ColdframeSmokeTest" component={ColdframeSmokeTest} durationInFrames={SMOKE_FRAMES} fps={30} width={1080} height={1920} />
-    {/* >>> PROJECT REGISTRATIONS — sync_project.ps1 appends here; wipe_project.ps1 resets the file <<< */}
-    {/* <<< END PROJECT REGISTRATIONS — wipe_project.ps1 resets the file <<< */}
+    {/* >>> PROJECT REGISTRATIONS â€” sync_project.ps1 appends here; wipe_project.ps1 resets the file <<< */}
+    {/* <<< END PROJECT REGISTRATIONS â€” wipe_project.ps1 resets the file <<< */}
   </>
 );
