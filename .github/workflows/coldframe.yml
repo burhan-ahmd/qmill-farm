@@ -1,0 +1,109 @@
+﻿# Render this Remotion project in the cloud with coldframe.
+# Start it from the Actions tab ("Run workflow") or with: coldframe render <CompositionId>
+# The MP4 is attached to the run; `coldframe render` downloads it to out/cloud/.
+#
+# Custom for this repo (burhan-ahmd/qmill-farm): unlike the stock template, the
+# Remotion project lives in studio/, the 3D Kenney models and the committed soundtrack are
+# verified BEFORE any render machine starts, and the WebGL/frame timeouts are raised for this
+# heavy three.js scene rendered in software (swangle) on GitHub's GPU-less runners.
+
+name: coldframe
+
+on:
+  workflow_dispatch:
+    inputs:
+      composition:
+        description: Composition id
+        required: true
+        default: ColdframeSmokeTest
+      chunks:
+        description: Parallel machines (1-20)
+        default: "8"
+      min-frames-per-chunk:
+        description: Smallest allowed chunk (lower = more machines usable)
+        default: "20"
+      props:
+        description: Input props (JSON)
+        default: "{}"
+      output-name:
+        description: Output file name (optional)
+        default: ""
+      entry-point:
+        description: Remotion entry point relative to studio/
+        required: true
+        default: src/index.ts
+
+jobs:
+  verify-assets:
+    name: Verify assets + craft gate
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Check the bundle will find every asset
+        working-directory: studio
+        run: node scripts/check-assets.mjs
+      # Craft gate (v2 skill): the camera-flow and framing helpers are pure maths with their own
+      # self-tests; a regression here would corrupt every future render's camera or safe area.
+      # Costs ~1 min of free minutes; a failure here must stop the render (no continue-on-error).
+      - name: Craft gate - flow + framing self-tests
+        working-directory: studio
+        run: |
+          npm ci --no-audit --no-fund
+          npx tsx scripts/flow_selftest.ts
+          npx tsx scripts/framing_selftest.ts
+
+  render:
+    needs: verify-assets
+    uses: Razee4315/coldframe/.github/workflows/render.yml@v1
+    with:
+      composition: ${{ inputs.composition }}
+      chunks: ${{ fromJSON(inputs.chunks) }}
+      props: ${{ inputs.props }}
+      output-name: ${{ inputs.output-name }}
+      # the Remotion project (package.json, src/, public/) sits in studio/
+      project-dir: studio
+      entry-point: ${{ inputs.entry-point }}
+      # three.js/WebGL without a GPU: swangle draws in software (looks identical, slower)
+      gl: swangle
+      # heavy 3D frames (MSAA 4 + ink + DOF + bloom) exceed the 120 s default per frame
+      frame-timeout: 300000
+      # a stuck chunk must not burn hours of minutes
+      chunk-timeout: 120
+      # lower this to let more machines in: coldframe caps chunks at floor(frames / min-frames-per-chunk)
+      min-frames-per-chunk: ${{ fromJSON(inputs.min-frames-per-chunk) }}
+
+  # Fast delivery: publishes the finished MP4 as a GitHub Release asset.
+  # Artifacts are slow to download and expire after 90 days; release assets sit on a CDN,
+  # need no auth on a public repo, and never expire. Failure here never breaks the render.
+  fast-download:
+    name: Publish MP4 as release asset
+    needs: render
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    permissions:
+      contents: write
+    steps:
+      - name: Attach the finished MP4 to a GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          RUN="${{ github.run_id }}"
+          REPO="${{ github.repository }}"
+          # coldframe names chunk artifacts "coldframe-part-XX" and the bundle "coldframe-bundle";
+          # whatever does not match those is the stitched final MP4.
+          NAME=$(gh api "repos/$REPO/actions/runs/$RUN/artifacts" --paginate \
+            --jq '.artifacts[] | select(.name | test("part-[0-9]+$|bundle$") | not) | .name' | head -n1)
+          echo "Final artifact: $NAME"
+          gh run download "$RUN" --repo "$REPO" --name "$NAME" --dir dl
+          FILE=$(find dl -type f -name "*.mp4" | head -n1)
+          [ -n "$FILE" ] || { echo "No MP4 found in artifact $NAME"; exit 1; }
+          TAG="render-$RUN"
+          # NOTE: gh release create has no --clobber flag; --clobber belongs to gh release upload.
+          gh release create "$TAG" "$FILE" --repo "$REPO" \
+            --title "Render $RUN" --notes "$NAME (run $RUN)" \
+            || gh release upload "$TAG" "$FILE" --repo "$REPO" --clobber
+          echo "Fast download: https://github.com/$REPO/releases/tag/$TAG"
