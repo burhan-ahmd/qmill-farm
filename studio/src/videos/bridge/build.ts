@@ -1,6 +1,6 @@
 // Static scenery: merged batches (one mesh per material), box-section strands rebuilt along a path every frame
 // (chains, rails), and the town on both banks: gabled houses with painted facades, church, mill + chimneys, quay,
-// hills and CC0 Kenney props (trees, lanterns, stalls, hedges).
+// hills and code-built props (trees, lanterns, stalls, hedges; see props.ts).
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { D0 } from "./story";

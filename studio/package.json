@@ -6,7 +6,6 @@
   "scripts": {
     "studio": "remotion studio src/index.ts",
     "stills": "node scripts/bridge-stills.mjs",
-    "models": "node scripts/get-models.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

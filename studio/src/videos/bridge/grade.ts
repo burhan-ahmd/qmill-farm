@@ -177,13 +177,27 @@ export const GRADE_NIGHT2: GradeParams = {
 //   shadows tint: blue Cb, RGB offset (-1.6, -0.1, +5.7)/255 (cool, lifted)
 //   mids tint: RGB offset (+1.6, -0.4, -0.9)/255 (near-neutral)
 //   highlights tint: hue ~35 deg, RGB offset (+5.6, -2.0, +2.8)/255 (torch warmth)
-export const GRADES: Record<"day" | "golden" | "night", GradeParams> = { day: GRADE_DAY2, golden: GRADE_GOLDEN2, night: GRADE_NIGHT2 };
+// interior + lamp (toonfacts v3.12 starting values — tune on real renders): warm golden-biased grades with
+// a slightly crushed, vignette-heavy night lean for the lamp pool.
+export const GRADE_INTERIOR2: GradeParams = {
+  ky: [0, 0.14, 0.34, 0.60, 0.82, 0.95, 1],
+  sat: [1.1, 1.05, 1.1],
+  tintS: [0.008, -0.006], tintM: [0.004, 0.0], tintH: [0.012, 0.006],
+  vig: [0.2, 0.38],
+};
+export const GRADE_LAMP2: GradeParams = {
+  ky: [0, 0.1, 0.28, 0.56, 0.8, 0.94, 1],
+  sat: [1.08, 1.02, 1.1],
+  tintS: [0.01, -0.008], tintM: [-0.002, 0.002], tintH: [0.016, 0.01],
+  vig: [0.24, 0.46],
+};
+export const GRADES: Record<"day" | "golden" | "interior" | "night" | "lamp", GradeParams> = { day: GRADE_DAY2, golden: GRADE_GOLDEN2, interior: GRADE_INTERIOR2, night: GRADE_NIGHT2, lamp: GRADE_LAMP2 };
 /** One strength (0..1, the effect's `amount`) per preset, set against the NEW world (bridge_world, 2026-10-31): full-strength
  *  presets overshot (day median Y' .59-.67 vs target .571, golden .58 vs .52); day 0.65 / golden 0.45 land at
  *  .54-.62 / ~.52. Re-fit the presets (grade.md 5.C) after the merge and raise these again. */
-export const GRADE_STRENGTH: Record<"day" | "golden" | "night", number> = { day: 1, golden: 1, night: 1 };
+export const GRADE_STRENGTH: Record<"day" | "golden" | "interior" | "night" | "lamp", number> = { day: 1, golden: 1, interior: 1, night: 1, lamp: 1 };
 /** Apply the preset of a light to the effect (only touches uniforms when the light changes). */
-export function gradeFor(fx: GradeEffect, light: "day" | "golden" | "night") {
+export function gradeFor(fx: GradeEffect, light: "day" | "golden" | "interior" | "night" | "lamp") {
   const tag = fx as unknown as { _light?: string };
   if (tag._light !== light) { fx.set(GRADES[light]); tag._light = light; }
   fx.amount = GRADE_STRENGTH[light];

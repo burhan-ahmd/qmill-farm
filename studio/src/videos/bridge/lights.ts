@@ -12,7 +12,7 @@ export type LightPreset = {
   sunCol: string; sunI: number; sky: string; ground: string; hemiI: number;         // three lights (unpatched mats only)
   bias: number; normalBias: number;
 };
-export const LIGHTS: Record<"day" | "golden" | "night", LightPreset> = {
+export const LIGHTS: Record<"day" | "golden" | "interior" | "night" | "lamp", LightPreset> = {
   day: {
     az: 75, el: 48,
     lit: [1.58, 1.5, 1.33], shade: [0.3, 0.29, 0.36], lift: [0.05, 0.06, 0.11], lambert: 0.35, sideK: 0.84, term: 0.2,
@@ -21,6 +21,26 @@ export const LIGHTS: Record<"day" | "golden" | "night", LightPreset> = {
     top: "#3e7fd2", hor: "#b8d0ec", skyCurve: [0.0, 0.5, 0.6], fog: "#b8d0ec", fogNear: 25, fogFar: 300, sunDisc: "#000000",
     sunCol: "#fff3e0", sunI: 2.8, sky: "#dcecff", ground: "#b49a78", hemiI: 0.55,
     bias: -0.00025, normalBias: 0.015,
+  },
+  // Room with one window or a high lamp: warm key, cool shade, dark ceiling. (toonfacts v3.12 starting values — tune on real renders)
+  interior: {
+    az: 55, el: 32,
+    lit: [1.42, 1.22, 0.92], shade: [0.22, 0.21, 0.30], lift: [0.04, 0.04, 0.09], lambert: 0.38, sideK: 0.80, term: 0.12,
+    charTint: [1.0, 0.90, 0.78], charShade: 0.80, charGrad: 0.12, bodyGrad: 0.26, sideTint: [0.84, 0.82, 0.95],
+    blob: [0.46, 0.43, 0.50], actorShadow: true,
+    top: "#2a2030", hor: "#6b5648", skyCurve: [0.1, 0.55, 0.9], fog: "#4a3b3a", fogNear: 12, fogFar: 90, sunDisc: "#000000",
+    sunCol: "#ffd9a0", sunI: 3.4, sky: "#4b4256", ground: "#5a4436", hemiI: 0.30,
+    bias: -0.0004, normalBias: 0.02,
+  },
+  // A single practical in frame (candle, bulb, screen): tight warm pool, hard falloff. (toonfacts v3.12 starting values — tune on real renders)
+  lamp: {
+    az: 20, el: 18,
+    lit: [1.60, 1.14, 0.62], shade: [0.16, 0.15, 0.24], lift: [0.03, 0.03, 0.07], lambert: 0.42, sideK: 0.76, term: 0.08,
+    charTint: [1.0, 0.84, 0.62], charShade: 0.76, charGrad: 0.15, bodyGrad: 0.30, sideTint: [0.80, 0.76, 0.92],
+    blob: [0.38, 0.32, 0.34], actorShadow: true,
+    top: "#1a1420", hor: "#5a3a28", skyCurve: [0.1, 0.6, 1.0], fog: "#3a2620", fogNear: 8, fogFar: 70, sunDisc: "#000000",
+    sunCol: "#ffc070", sunI: 4.2, sky: "#3a2e3c", ground: "#4a3024", hemiI: 0.22,
+    bias: -0.0005, normalBias: 0.025,
   },
   golden: {
     az: 6, el: 7,
@@ -54,7 +74,7 @@ export type WorldLook = {
   sat: number;                                                // shade.ts uSat: world albedo saturation (1 = as painted)
   cloud: { lit: string; mid: string; shade: string };
 };
-export const LOOK: Record<"day" | "golden" | "night", WorldLook> = {
+export const LOOK: Record<"day" | "golden" | "interior" | "night" | "lamp", WorldLook> = {
   day: {
     // depth.md 2.2: horizon #9fb6e6 just above the skyline, upper sky #5e93d9 at ~20 deg (grade: frame top #5997e2)
     sky: { c: ["#b8d0ec", "#9cbfea", "#6a9fe0", "#4f8cdb", "#3373cc"], e: [0, 3, 8, 16, 40] },
@@ -62,6 +82,14 @@ export const LOOK: Record<"day" | "golden" | "night", WorldLook> = {
     cloud: { lit: "#fbf8f1", mid: "#e1e5f3", shade: "#c3cbe9" },
     bounce: [0, 0, 0],
     sat: 1.08,
+  },
+  // interior (toonfacts v3.12 starting values): warm practical-lit room — brown-amber sky dome, cool water, warm clouds.
+  interior: {
+    sky: { c: ["#6b5648", "#53423c", "#3e3139", "#2e2430", "#221a28"], e: [0, 4, 10, 20, 40] },
+    water: { near: "#3a4f66", mid: "#2b3d53", far: "#22303f", crest: "#6d8aa6", trough: "#182331", glint: "#ffe6bd", shade: [0.42, 0.44, 0.60] },
+    cloud: { lit: "#f0dcc0", mid: "#c9ab94", shade: "#8a7080" },
+    bounce: [0.05, 0.03, 0.01],
+    sat: 1.22,
   },
   golden: {
     // sunset, not dusk: #ffd08a horizon, peach/orange through ~10 deg, warm rose at 20, muted warm mauve only near the top
@@ -80,5 +108,13 @@ export const LOOK: Record<"day" | "golden" | "night", WorldLook> = {
     cloud: { lit: "#3d4a78", mid: "#2b3560", shade: "#1c2448" },
     bounce: [0.0, 0.01, 0.04],
     sat: 1.0,
+  },
+  // lamp (toonfacts v3.12 starting values): single practical — deep warm brown dome, candle-lit water glint.
+  lamp: {
+    sky: { c: ["#5a3a28", "#462e24", "#34221f", "#261a1e", "#1a1420"], e: [0, 4, 10, 20, 40] },
+    water: { near: "#4a3324", mid: "#38261e", far: "#281c18", crest: "#c08a52", trough: "#1a1210", glint: "#ffd79a", shade: [0.40, 0.36, 0.44] },
+    cloud: { lit: "#ffc894", mid: "#c08a64", shade: "#6e5058" },
+    bounce: [0.07, 0.04, 0.0],
+    sat: 1.24,
   },
 };
