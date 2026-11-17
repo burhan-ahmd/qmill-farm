@@ -15,6 +15,8 @@ export const Root: React.FC = () => (
     {/* distributed-render smoke test: the story's first 450 frames plus the committed 15 s soundtrack */}
     <Composition id="ColdframeSmokeTest" component={ColdframeSmokeTest} durationInFrames={SMOKE_FRAMES} fps={30} width={1080} height={1920} />
     {/* >>> PROJECT REGISTRATIONS â€” sync_project.ps1 appends here; wipe_project.ps1 resets the file <<< */}
+import { Test10, TEST10_FRAMES } from "./projects/test10/Test10.tsx";
+    <Composition id="Test10" component={Test10} durationInFrames={TEST10_FRAMES} fps={30} width={1080} height={1920} />
     {/* <<< END PROJECT REGISTRATIONS â€” wipe_project.ps1 resets the file <<< */}
   </>
 );
